@@ -22,14 +22,23 @@ contract PCTtoHundredMigrator {
         Hundred.approve(vesting, type(uint256).max);
     }
 
-    function claim(uint256 amount) public {
+    function _migrate(address user, uint256 amount) internal {
         require(amount != 0, "Amount should bigger than 0");
 
         uint256 immediateAmount = amount * UserPercent / PercentMax;
         uint256 vestingAmount = amount - immediateAmount;
 
-        PCT.safeTransferFrom(msg.sender, address(this), amount);
-        Hundred.transfer(msg.sender, immediateAmount);
-        Vesting.vesting(msg.sender, vestingAmount);
+        PCT.safeTransferFrom(user, address(this), amount);
+        Hundred.transfer(user, immediateAmount);
+        Vesting.beginVesting(user, vestingAmount);
+    }
+
+    function migrate(uint256 amount) public {
+        _migrate(msg.sender, amount);
+    }
+    
+    function migrateAll() public {
+        uint256 amount = PCT.balanceOf(msg.sender);
+        _migrate(msg.sender, amount);
     }
 }

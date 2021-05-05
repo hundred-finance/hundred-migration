@@ -11,7 +11,7 @@ contract HundredVesting {
     uint256 numberOfEpochs;
     uint256 epochLength;
     struct UserInfo {
-        uint256 amount;
+        uint256 totalAmount;
         uint256 timestamp;
         uint256 claimedAmount;
     }
@@ -23,43 +23,45 @@ contract HundredVesting {
         numberOfEpochs = totalVestingTime / _epochLength;
     }
 
-    function vesting (address vestedAddress, uint256 amount) external {
+    function beginVesting(address beneficiary, uint256 amount) external {
         require(amount != 0, "Amount should bigger than 0");
 
         Hundred.safeTransferFrom(msg.sender, address(this), amount);
-        UserInfo memory user = addresses[vestedAddress];
-        if (user.amount != 0) {
-            user.amount = user.amount - user.claimedAmount + amount;
+        UserInfo memory user = addresses[beneficiary];
+        if (user.totalAmount != 0) {
+            user.totalAmount = user.totalAmount - user.claimedAmount + amount;
             user.timestamp = block.timestamp;
             user.claimedAmount = 0;
         } else {
-            user = UserInfo({ amount: amount, timestamp: block.timestamp, claimedAmount: 0 });
+            user = UserInfo({ totalAmount: amount, timestamp: block.timestamp, claimedAmount: 0 });
         }
-        addresses[vestedAddress] = user;
+        addresses[beneficiary] = user;
     }
 
-    function claim () public {
-        uint256 amount = getClaimableAmount();
+    function claimVested() public {
+        uint256 amount = getClaimableVest(msg.sender);
         require(amount != 0, "No claimable hundred token");
 
         Hundred.safeTransfer(msg.sender, amount);
         addresses[msg.sender].claimedAmount = addresses[msg.sender].claimedAmount + amount;
     }
 
-    function getClaimableAmount () public view returns(uint) {
-        UserInfo memory user = addresses[msg.sender];
+    function getClaimableVest(address beneficiary) public view returns(uint) {
+        UserInfo memory user = addresses[beneficiary];
         require(user.timestamp != 0, "Invalid address");
-        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.amount / numberOfEpochs;
+        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.totalAmount / numberOfEpochs;
         return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
 
-    function getClaimedAmount () public view returns(uint) {
-        UserInfo memory user = addresses[msg.sender];
-        return user.claimedAmount;
+    function getClaimedVest(address beneficiary) public view returns(uint) {
+        return addresses[beneficiary].claimedAmount;
     }
 
-    function getVestedAmount () public view returns(uint) {
-        UserInfo memory user = addresses[msg.sender];
-        return user.amount;
+    function getRemainingVest(address beneficiary) public view returns(uint) {
+        return getTotalVest(beneficiary) - getClaimedVest(beneficiary);
+    }
+
+    function getTotalVest(address beneficiary) public view returns(uint) {
+        return addresses[beneficiary].totalAmount;
     }
 }
