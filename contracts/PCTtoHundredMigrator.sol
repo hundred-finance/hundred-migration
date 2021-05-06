@@ -10,7 +10,7 @@ contract PCTtoHundredMigrator {
     using SafeMath for uint256;
 
     IERC20 public immutable PCT;
-    IERC20 public immutable Hundred;
+    IERC20 public Hundred;
     HundredVesting public immutable Vesting;
     uint256 public UserPercent = 10;
     uint256 public VestingPercent = 90;
@@ -20,6 +20,7 @@ contract PCTtoHundredMigrator {
         PCT = pct;
         Hundred = hundred;
         Vesting = HundredVesting(vesting);
+        Hundred.approve(vesting, type(uint256).max);
     }
 
     function claim(uint256 amount) public {
@@ -30,7 +31,6 @@ contract PCTtoHundredMigrator {
 
         PCT.transferFrom(msg.sender, address(this), amount);
         Hundred.transfer(msg.sender, immediateAmount);
-        Hundred.transfer(address(Vesting), vestingAmount);
         Vesting.vesting(msg.sender, vestingAmount);
     }
 }

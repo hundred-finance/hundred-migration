@@ -33,6 +33,7 @@ contract HundredVesting is Ownable {
         require(vester != address(0), "Invalid address");
         require(amount != 0, "Amount should bigger than 0");
 
+        Hundred.transferFrom(msg.sender, address(this), amount);
         UserInfo memory user = addresses[vester];
         if (user.amount != 0) {
             user.amount = user.amount - user.claimedAmount + amount;
