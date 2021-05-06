@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.0;
+pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -25,9 +25,12 @@ contract PCTtoHundredMigrator {
     function claim(uint256 amount) public {
         require(amount != 0, "Amount should bigger than 0");
 
+        uint256 immediateAmount = amount * UserPercent / PercentMax;
+        uint256 vestingAmount = amount - immediateAmount;
+
         PCT.transferFrom(msg.sender, address(this), amount);
-        Hundred.transfer(msg.sender, amount.mul(UserPercent).div(PercentMax));
-        Hundred.transfer(address(Vesting), amount.mul(VestingPercent).div(PercentMax));
-        Vesting.vesting(msg.sender, amount.mul(VestingPercent).div(PercentMax));
+        Hundred.transfer(msg.sender, immediateAmount);
+        Hundred.transfer(address(Vesting), vestingAmount);
+        Vesting.vesting(msg.sender, vestingAmount);
     }
 }

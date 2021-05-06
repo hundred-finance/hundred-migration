@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.0;
+pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract HundredVesting is Ownable {
-    using SafeMath for uint256;
-
     IERC20 public immutable Hundred;
     uint256 totalPeriod = 365 * 24 * 60 * 60;
     uint256 timePerPeriod;
@@ -23,13 +20,13 @@ contract HundredVesting is Ownable {
     constructor(IERC20 hundred, uint256 period) {
         Hundred = hundred;
         timePerPeriod = period;
-        totalPeriod = totalPeriod.div(period);
+        totalPeriod = totalPeriod / period;
     }
 
     function getRemainedAmount (address vester) internal view returns (uint256) {
         uint256 timestamp = addresses[vester].timestamp;
-        uint256 amount = block.timestamp.sub(timestamp).div(timePerPeriod).mul(addresses[vester].amount).div(totalPeriod);
-        return amount.sub(addresses[vester].claimedAmount);
+        uint256 amount = (block.timestamp - timestamp) / timePerPeriod * addresses[vester].amount / totalPeriod;
+        return amount - addresses[vester].claimedAmount;
     }
     
     function vesting (address vester, uint256 amount) external {
@@ -38,7 +35,7 @@ contract HundredVesting is Ownable {
 
         UserInfo memory user = addresses[vester];
         if (user.amount != 0) {
-            user.amount = user.amount.sub(user.claimedAmount).add(amount);
+            user.amount = user.amount - user.claimedAmount + amount;
             user.timestamp = block.timestamp;
             user.claimedAmount = 0;
         } else {
@@ -53,7 +50,7 @@ contract HundredVesting is Ownable {
         uint256 amount = getRemainedAmount(vester);
         require(amount != 0, "No claimable hundred token");
 
-        addresses[vester].claimedAmount = addresses[vester].claimedAmount.add(amount);
+        addresses[vester].claimedAmount = addresses[vester].claimedAmount + amount;
         Hundred.transfer(msg.sender, amount);
     }
 
