@@ -9,7 +9,7 @@ contract HundredVesting {
     using SafeERC20 for IERC20;
     IERC20 public immutable Hundred;
     uint256 totalPeriod = 365 * 24 * 60 * 60;
-    uint256 timePerPeriod;
+    uint256 epochLength;
     struct UserInfo {
         uint256 amount;
         uint256 timestamp;
@@ -19,7 +19,7 @@ contract HundredVesting {
 
     constructor(IERC20 hundred, uint256 period) {
         Hundred = hundred;
-        timePerPeriod = period;
+        epochLength = period;
         totalPeriod = totalPeriod / period;
     }
 
@@ -50,7 +50,7 @@ contract HundredVesting {
     function getClaimableAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
         require(user.timestamp != 0, "Invalid address");
-        uint256 amount = (block.timestamp - user.timestamp) / timePerPeriod * user.amount / totalPeriod;
+        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.amount / totalPeriod;
         return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
 
