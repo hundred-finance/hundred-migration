@@ -49,7 +49,7 @@ contract HundredVesting {
 
     function getClaimableAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
-        requires(user.timestamp != 0, "Invalid address");
+        require(user.timestamp != 0, "Invalid address");
         uint256 amount = (block.timestamp - user.timestamp) / timePerPeriod * user.amount / totalPeriod;
         return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
