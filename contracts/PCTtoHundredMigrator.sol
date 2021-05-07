@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./HundredVesting.sol";
 
 contract PCTtoHundredMigrator {
+    // not sure SafeMath is needed here...
     using SafeMath for uint256;
 
     IERC20 public immutable PCT;
@@ -29,7 +30,10 @@ contract PCTtoHundredMigrator {
         uint256 immediateAmount = amount * UserPercent / PercentMax;
         uint256 vestingAmount = amount - immediateAmount;
 
+        // should use a safe transferFrom or check
+        // output before going further
         PCT.transferFrom(msg.sender, address(this), amount);
+
         Hundred.transfer(msg.sender, immediateAmount);
         Vesting.vesting(msg.sender, vestingAmount);
     }
