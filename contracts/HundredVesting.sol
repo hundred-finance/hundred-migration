@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HundredVesting is Ownable {
+contract HundredVesting {
+    using SafeERC20 for IERC20;
     IERC20 public immutable Hundred;
-    uint256 totalPeriod = 365 * 24 * 60 * 60;
-    uint256 timePerPeriod;
+    uint256 numberOfEpochs = 365 * 24 * 60 * 60;
+    uint256 epochLength;
     struct UserInfo {
         uint256 amount;
         uint256 timestamp;
@@ -19,22 +19,15 @@ contract HundredVesting is Ownable {
 
     constructor(IERC20 hundred, uint256 period) {
         Hundred = hundred;
-        timePerPeriod = period;
-        totalPeriod = totalPeriod / period;
+        epochLength = period;
+        numberOfEpochs = numberOfEpochs / period;
     }
 
-    function getRemainedAmount (address vester) internal view returns (uint256) {
-        uint256 timestamp = addresses[vester].timestamp;
-        uint256 amount = (block.timestamp - timestamp) / timePerPeriod * addresses[vester].amount / totalPeriod;
-        return amount - addresses[vester].claimedAmount;
-    }
-    
-    function vesting (address vester, uint256 amount) external {
-        require(vester != address(0), "Invalid address");
+    function vesting (address vestedAddress, uint256 amount) external {
         require(amount != 0, "Amount should bigger than 0");
 
-        Hundred.transferFrom(msg.sender, address(this), amount);
-        UserInfo memory user = addresses[vester];
+        Hundred.safeTransferFrom(msg.sender, address(this), amount);
+        UserInfo memory user = addresses[vestedAddress];
         if (user.amount != 0) {
             user.amount = user.amount - user.claimedAmount + amount;
             user.timestamp = block.timestamp;
@@ -42,37 +35,32 @@ contract HundredVesting is Ownable {
         } else {
             user = UserInfo({ amount: amount, timestamp: block.timestamp, claimedAmount: 0 });
         }
-        user.timestamp = block.timestamp;
-        addresses[vester] = user;
+        addresses[vestedAddress] = user;
     }
 
-    function claim (address vester) public {
-        require(vester != address(0), "Invalid address");
-        uint256 amount = getRemainedAmount(vester);
+    function claim () public {
+        require(msg.sender != address(0), "Invalid address");
+        uint256 amount = getClaimableAmount();
         require(amount != 0, "No claimable hundred token");
 
-        addresses[vester].claimedAmount = addresses[vester].claimedAmount + amount;
-        Hundred.transfer(msg.sender, amount);
+        Hundred.safeTransfer(msg.sender, amount);
+        addresses[msg.sender].claimedAmount = addresses[msg.sender].claimedAmount + amount;
     }
 
-    function getClaimableAmount (address vester) public view returns(uint) {
-        require(vester != address(0), "Invalid address");
-        UserInfo memory user = addresses[vester];
-        require(user.amount != 0, "It's not a vested account");
-        return getRemainedAmount(vester);
+    function getClaimableAmount () public view returns(uint) {
+        UserInfo memory user = addresses[msg.sender];
+        require(user.timestamp != 0, "Invalid address");
+        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.amount / numberOfEpochs;
+        return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
 
-    function getClaimedAmount (address vester) public view returns(uint) {
-        require(vester != address(0), "Invalid address");
-        UserInfo memory user = addresses[vester];
-        require(user.amount != 0, "It's not a vested account");
+    function getClaimedAmount () public view returns(uint) {
+        UserInfo memory user = addresses[msg.sender];
         return user.claimedAmount;
     }
 
-    function getVestedAmount (address vester) public view returns(uint) {
-        require(vester != address(0), "Invalid address");
-        UserInfo memory user = addresses[vester];
-        require(user.amount != 0, "It's not a vested account");
+    function getVestedAmount () public view returns(uint) {
+        UserInfo memory user = addresses[msg.sender];
         return user.amount;
     }
 }
