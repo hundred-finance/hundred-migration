@@ -19,7 +19,7 @@ describe("Migrator contract", function() {
 
         // Deploy Vesting Contract
         const vestingContract = await ethers.getContractFactory("HundredVesting");
-        const Vesting = await vestingContract.deploy(HundredToken.address, 100);
+        const Vesting = await vestingContract.deploy(HundredToken.address, 100, period);
 
         // Deploy Migrator Contract
         const migratorContract = await ethers.getContractFactory("PCTtoHundredMigrator");
