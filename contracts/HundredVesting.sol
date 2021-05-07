@@ -39,7 +39,6 @@ contract HundredVesting {
     }
 
     function claim () public {
-        require(msg.sender != address(0), "Invalid address");
         uint256 amount = getClaimableAmount();
         require(amount != 0, "No claimable hundred token");
 
