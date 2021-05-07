@@ -46,7 +46,7 @@ describe("Migrator contract", function() {
         expect(hundredBalanceOfOwner).to.equal(supply - vestingContractHundredBalance + claimAmount * 0.1);
 
         // Get vested Amount
-        const vestedAmount = await Vesting.connect(owner).getVestedAmount(owner.address);
+        const vestedAmount = await Vesting.connect(owner).getVestedAmount();
         console.log('Vested Amount', vestedAmount.toNumber());
         expect(vestedAmount).to.equal(claimAmount * 0.9);
 
@@ -55,20 +55,20 @@ describe("Migrator contract", function() {
         await owner.provider.send("evm_mine");
 
         // Check claimable amount of vesting contract
-        const firstClaimableAmount = await Vesting.connect(owner).getClaimableAmount(owner.address);
+        const firstClaimableAmount = await Vesting.connect(owner).getClaimableAmount();
         console.log('Claimable Amount', firstClaimableAmount.toNumber());
         expect(firstClaimableAmount).to.equal(parseInt(1000 * vestedAmount / period, 10));
 
         // Claim current claimable amount of vesting contract
-        await Vesting.connect(owner).claim(owner.address);
+        await Vesting.connect(owner).claim();
 
 
         //// Checking for second claim
         // Get hundred balance of vesting contract after claim
-        const claimableAmount = await Vesting.connect(owner).getClaimableAmount(owner.address);
+        const claimableAmount = await Vesting.connect(owner).getClaimableAmount();
         console.log('Claimable Amount after claim', claimableAmount.toNumber());
 
-        const firstClaimedAmount = await Vesting.connect(owner).getClaimedAmount(owner.address);
+        const firstClaimedAmount = await Vesting.connect(owner).getClaimedAmount();
         console.log('firstClaimedAmount', 'firstClaimedAmount');
         expect(firstClaimedAmount).to.equal(firstClaimableAmount);
 
@@ -85,7 +85,7 @@ describe("Migrator contract", function() {
         expect(hundredBalance).to.equal((claimAmount * 0.9 - firstClaimableAmount) + claimAmount * 0.9);
 
         // Check vested amount after second vest;
-        const secondVestedAmount = await Vesting.connect(owner).getVestedAmount(owner.address);
+        const secondVestedAmount = await Vesting.connect(owner).getVestedAmount();
         console.log('Second vested Amount', secondVestedAmount.toNumber());
         expect(secondVestedAmount).to.equal(vestedAmount * 2 - firstClaimedAmount);
 
@@ -94,12 +94,12 @@ describe("Migrator contract", function() {
         await owner.provider.send("evm_mine");
 
         // Check second claimAbleAmount
-        const secondClaimableAmount = await Vesting.connect(owner).getClaimableAmount(owner.address);
+        const secondClaimableAmount = await Vesting.connect(owner).getClaimableAmount();
         console.log('Second claimable amount', secondClaimableAmount.toNumber());
         expect(secondClaimableAmount).to.equal(parseInt(1000 * (vestedAmount * 2 - firstClaimableAmount) / period, 10))
 
         // Claim current claimable amount of vesting contract
-        await Vesting.connect(owner).claim(owner.address);
+        await Vesting.connect(owner).claim();
 
 
     });
