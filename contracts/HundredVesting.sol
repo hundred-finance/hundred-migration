@@ -23,12 +23,6 @@ contract HundredVesting {
         totalPeriod = totalPeriod / period;
     }
 
-    function getRemainedAmount (address vestedAddress) internal view returns (uint256) {
-        uint256 timestamp = addresses[vestedAddress].timestamp;
-        uint256 amount = (block.timestamp - timestamp) / timePerPeriod * addresses[vestedAddress].amount / totalPeriod - addresses[vestedAddress].claimedAmount;
-        return amount < 0 ? 0 : amount;
-    }
-    
     function vesting (address vestedAddress, uint256 amount) external {
         require(amount != 0, "Amount should bigger than 0");
 
@@ -46,7 +40,7 @@ contract HundredVesting {
 
     function claim () public {
         require(msg.sender != address(0), "Invalid address");
-        uint256 amount = getRemainedAmount(msg.sender);
+        uint256 amount = getClaimableAmount();
         require(amount != 0, "No claimable hundred token");
 
         Hundred.safeTransfer(msg.sender, amount);
@@ -55,19 +49,18 @@ contract HundredVesting {
 
     function getClaimableAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
-        require(user.amount != 0, "It's not a vested account");
-        return getRemainedAmount(msg.sender);
+        uint256 timestamp = user.timestamp;
+        uint256 amount = (block.timestamp - timestamp) / timePerPeriod * user.amount / totalPeriod;
+        return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
 
     function getClaimedAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
-        require(user.amount != 0, "It's not a vested account");
         return user.claimedAmount;
     }
 
     function getVestedAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
-        require(user.amount != 0, "It's not a vested account");
         return user.amount;
     }
 }
