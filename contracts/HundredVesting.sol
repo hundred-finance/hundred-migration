@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract HundredVesting {
     using SafeERC20 for IERC20;
     IERC20 public immutable Hundred;
-    uint256 totalPeriod = 365 * 24 * 60 * 60;
+    uint256 numberOfEpochs = 365 * 24 * 60 * 60;
     uint256 epochLength;
     struct UserInfo {
         uint256 amount;
@@ -20,7 +20,7 @@ contract HundredVesting {
     constructor(IERC20 hundred, uint256 period) {
         Hundred = hundred;
         epochLength = period;
-        totalPeriod = totalPeriod / period;
+        numberOfEpochs = numberOfEpochs / period;
     }
 
     function vesting (address vestedAddress, uint256 amount) external {
@@ -50,7 +50,7 @@ contract HundredVesting {
     function getClaimableAmount () public view returns(uint) {
         UserInfo memory user = addresses[msg.sender];
         require(user.timestamp != 0, "Invalid address");
-        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.amount / totalPeriod;
+        uint256 amount = (block.timestamp - user.timestamp) / epochLength * user.amount / numberOfEpochs;
         return amount < user.claimedAmount ? 0 : amount - user.claimedAmount;
     }
 
