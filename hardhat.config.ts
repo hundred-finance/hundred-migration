@@ -1,6 +1,7 @@
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-etherscan";
 import "hardhat-typechain"
+import "hardhat-gas-reporter"
 import { HardhatUserConfig } from "hardhat/types";
 import * as dotenv from "dotenv";
 
@@ -29,6 +30,11 @@ const config : HardhatUserConfig ={
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 100,
+    coinmarketcap: "da3d4240-99eb-40f7-b5c6-f0597741ec37"
   }
 };
 
